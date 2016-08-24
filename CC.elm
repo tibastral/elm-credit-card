@@ -27,9 +27,9 @@ limitSize len str =
 
 splitEvery pos str =
     if length str > pos then
-        left pos str :: splitEvery pos (dropLeft pos str)
+        (left pos str) :: (splitEvery pos (dropLeft pos str))
     else
-        []
+        [ str ]
 
 
 
