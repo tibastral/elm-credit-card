@@ -15,25 +15,38 @@ main =
 
 type Msg
     = CardNumber String
+    | CardCvvNumber String
+    | CardDateNumber String
 
 
 init =
-    ( "", Cmd.none )
+    ( { number = "", cvv = "", date = "" }, Cmd.none )
 
 
 limitSize len str =
     String.slice 0 len str
 
 
-splitEvery pos str =
+splitAt pos str =
     if length str > pos then
-        (left pos str) :: (splitEvery pos (dropLeft pos str))
+        [ left pos str, dropLeft pos str ]
     else
         [ str ]
 
 
+splitAtCouple pos str =
+    ( left pos str, dropLeft pos str )
 
--- [ left pos str, dropLeft pos str ]
+
+splitEvery pos str =
+    if length str > pos then
+        let
+            ( head, tail ) =
+                splitAtCouple pos str
+        in
+            head :: splitEvery pos tail
+    else
+        [ str ]
 
 
 putSpacesEvery len str =
@@ -57,18 +70,62 @@ removeSpace text =
         |> removeRegex " "
 
 
-spaced text =
+numberFormat text =
     text
         |> onlyNumbers
         |> limitSize 16
         |> putSpacesEvery 4
 
 
+cvvFormat text =
+    text
+        |> onlyNumbers
+        |> limitSize 4
+
+
+dateFormat text =
+    text
+        |> onlyNumbers
+        |> limitSize 6
+        |> splitAt 2
+        |> join " / "
+
+
+textInput val inputMsg theId theName =
+    div [ style [ ( "padding", "12px" ) ] ]
+        [ label [ for theId ] [ text theName ]
+        , br [] []
+        , input [ style [ ( "width", "100%" ), ( "font-size", "20px" ) ], type' "text", val |> value, id theId, onInput inputMsg ] []
+        ]
+
+
+numberInput model =
+    textInput (model.number |> numberFormat) CardNumber "card-number" "Number"
+
+
+cvvInput model =
+    textInput (model.cvv |> cvvFormat) CardCvvNumber "card-cvv" "CVV"
+
+
+dateInput model =
+    textInput (model.date |> dateFormat) CardDateNumber "card-date" "Date"
+
+
 view model =
-    input [ type' "text", model |> spaced |> value, onInput CardNumber ] []
+    div [ style [ ( "margin-left", "auto" ), ( "margin-right", "auto" ), ( "max-width", "300px" ) ] ]
+        [ model |> numberInput
+        , model |> dateInput
+        , model |> cvvInput
+        ]
 
 
 update msg model =
     case msg of
-        CardNumber newVal ->
-            ( newVal |> removeSpace, Cmd.none )
+        CardNumber number ->
+            ( { model | number = number |> removeSpace }, Cmd.none )
+
+        CardCvvNumber cvv ->
+            ( { model | cvv = cvv |> removeSpace }, Cmd.none )
+
+        CardDateNumber date ->
+            ( { model | date = date |> removeSpace }, Cmd.none )
