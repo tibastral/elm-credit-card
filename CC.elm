@@ -4,7 +4,7 @@ import Html.App as Html
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-import String exposing (..)
+import String exposing (slice, length, left, dropLeft, join)
 import List exposing (map)
 import Regex
 
@@ -25,43 +25,40 @@ limitSize len str =
     String.slice 0 len str
 
 
+splitAt pos str =
+    [ left pos str, dropLeft pos str ]
+
+
 putSpacesEvery len str =
-    let
-        putSpacesEveryLen =
-            putSpacesEvery len
-    in
-        if String.length str > len then
-            (str |> left len |> putSpacesEveryLen)
-                ++ " "
-                ++ (str |> dropLeft len |> putSpacesEveryLen)
-        else
-            str
+    if length str > len then
+        str
+            |> splitAt len
+            |> map (putSpacesEvery len)
+            |> join " "
+    else
+        str
 
 
+removeRegex regex text =
+    text
+        |> Regex.replace Regex.All (Regex.regex regex) (\_ -> "")
 
--- if String.length str > len
---   spacesBy len (str |> slice 0 4) ++ spaceBy len (str |> slice 4 0)
--- else
---   str
+
+onlyNumbers text =
+    text
+        |> removeRegex "\\D"
+
+
+removeSpace text =
+    text
+        |> removeRegex " "
 
 
 spaced text =
     text
+        |> onlyNumbers
         |> limitSize 16
         |> putSpacesEvery 4
-
-
-
--- (String.slide 0 16 text)
---   if String.length text > 4 then
---       String.slice 0 4 text ++ " " ++ String.slice 4 8 text
---   else
---       String.slice 0 4 text
--- String.slice 0 4 text ++ " " ++ slice 4 8 text
-
-
-removeSpace text =
-    Regex.replace Regex.All (Regex.regex " ") (\_ -> "") text
 
 
 view model =
