@@ -25,18 +25,21 @@ limitSize len str =
     String.slice 0 len str
 
 
-splitAt pos str =
-    [ left pos str, dropLeft pos str ]
+splitEvery pos str =
+    if length str > pos then
+        left pos str :: splitEvery pos (dropLeft pos str)
+    else
+        []
+
+
+
+-- [ left pos str, dropLeft pos str ]
 
 
 putSpacesEvery len str =
-    if length str > len then
-        str
-            |> splitAt len
-            |> map (putSpacesEvery len)
-            |> join " "
-    else
-        str
+    str
+        |> splitEvery len
+        |> join " "
 
 
 removeRegex regex text =
