@@ -6,6 +6,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import String exposing (slice, length, left, dropLeft, join)
 import List exposing (map)
+import CssHelpers exposing (..)
+import InlineHover exposing (..)
 import Regex
 
 
@@ -91,41 +93,55 @@ dateFormat text =
         |> join " / "
 
 
-textInput val inputMsg theId theName =
-    div [ style [ ( "padding", "12px" ) ] ]
-        [ label [ for theId ] [ text theName ]
-        , br [] []
-        , input [ style [ ( "width", "100%" ), ( "font-size", "20px" ) ], type' "text", val |> value, id theId, onInput inputMsg ] []
+textInputStyle =
+    [ sP 6
+    , sW100
+    , sFs 20
+    ]
+
+
+textInput val inputMsg theName =
+    div [ style [ sP 12 ] ]
+        [ input [ style textInputStyle, type' "text", value val, placeholder theName, onInput inputMsg ] []
         ]
 
 
 numberInput model =
-    textInput (model.number |> numberFormat) CardNumber "card-number" "Number"
+    textInput (model.number |> numberFormat) CardNumber "Number"
 
 
 cvvInput model =
-    textInput (model.cvv |> cvvFormat) CardCvvNumber "card-cvv" "CVV"
+    textInput (model.cvv |> cvvFormat) CardCvvNumber "CVV"
 
 
 dateInput model =
-    textInput (model.date |> dateFormat) CardDateNumber "card-date" "Date"
+    textInput (model.date |> dateFormat) CardDateNumber "Date"
+
+
+globalStyles =
+    Html.node "style" [] [ text "* {box-sizing: border-box} input:focus, button:focus {outline: none; border-color: transparent; box-shadow: 0 0 10px #bbb;}" ]
 
 
 view model =
-    div [ style [ ( "margin-left", "auto" ), ( "margin-right", "auto" ), ( "max-width", "300px" ) ] ]
-        [ model |> numberInput
-        , model |> dateInput
-        , model |> cvvInput
+    div [ style (tc :: ffs :: (centeredWithMaxWidth 300)) ]
+        [ globalStyles
+        , h1 [] [ text "Credit card details" ]
+        , Html.form []
+            [ model |> numberInput
+            , model |> dateInput
+            , model |> cvvInput
+            , div [ style [ sP 12 ] ] [ hover btnHover button [ style btn ] [ text "Pay" ] ]
+            ]
         ]
 
 
 update msg model =
     case msg of
         CardNumber number ->
-            ( { model | number = number |> removeSpace }, Cmd.none )
+            ( { model | number = number |> onlyNumbers }, Cmd.none )
 
         CardCvvNumber cvv ->
-            ( { model | cvv = cvv |> removeSpace }, Cmd.none )
+            ( { model | cvv = cvv |> onlyNumbers }, Cmd.none )
 
         CardDateNumber date ->
-            ( { model | date = date |> removeSpace }, Cmd.none )
+            ( { model | date = date |> onlyNumbers }, Cmd.none )
